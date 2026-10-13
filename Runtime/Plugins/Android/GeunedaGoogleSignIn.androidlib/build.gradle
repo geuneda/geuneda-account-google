@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.library'
+}
+
+// Geuneda.Account.Google 의 Android 라이브러리(Credential Manager). 이 패키지를 설치한 게임에만 들어간다
+def unityLib = project(':unityLibrary').extensions.getByName('android')
+
+def compileSdkOf(unityLib) {
+    def version = unityLib.compileSdkVersion.find('\\d+').toInteger()
+    return version < 34 ? 34 : version
+}
+
+android {
+    // Unity 2021.3(AGP 4.0)에는 namespace 가 없어 AndroidManifest 의 package 를 쓴다
+    if (project.android.hasProperty("namespace")) {
+        namespace "com.geuneda.account.google"
+    }
+
+    compileSdkVersion compileSdkOf(unityLib)
+    buildToolsVersion unityLib.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion 23
+        consumerProguardFiles "proguard-rules.pro"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+    // credentials-play-services-auth 는 play-services-auth 에서 androidx.core·androidx.loader 를 빼고 받는다(앱에 이미 있다고 가정).
+    // Unity 앱에는 둘 다 없어 HiddenActivity 가 androidx.activity.ComponentActivity 를 못 읽고 죽으므로 직접 넣는다.
+    // 버전은 그 경로가 원래 요구하던 최소 버전이고, 게임이 더 높은 버전을 쓰면 Gradle 이 그쪽을 고른다.
+    implementation 'androidx.core:core:1.8.0'
+    implementation 'androidx.loader:loader:1.0.0'
+}

@@ -1,0 +1,19 @@
+{
+    "name": "Geuneda.Account.Google",
+    "rootNamespace": "Geuneda.Account.Google",
+    "references": [
+        "Geuneda.Account",
+        "Geuneda.Core",
+        "Geuneda.Http",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
