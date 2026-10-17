@@ -41,7 +41,7 @@ namespace Geuneda.Account.Google.Tests
 		{
 			var pkce = new GooglePkce("verifier-value", "state-value");
 
-			var url = new Uri(pkce.AuthorizationUrl(ClientId));
+			var url = new Uri(pkce.AuthorizationUrl(ClientId, "nonce-value_-"));
 
 			Assert.AreEqual("accounts.google.com", url.Host);
 			StringAssert.Contains("client_id=" + Uri.EscapeDataString(ClientId), url.Query);
@@ -51,6 +51,8 @@ namespace Geuneda.Account.Google.Tests
 			StringAssert.Contains("code_challenge=" + GooglePkce.ChallengeOf("verifier-value"), url.Query);
 			StringAssert.Contains("code_challenge_method=S256", url.Query);
 			StringAssert.Contains("state=state-value", url.Query);
+			// 서버가 발급한 nonce 원문이 그대로 간다(구글이 id 토큰의 nonce 클레임에 넣음)
+			StringAssert.Contains("&nonce=nonce-value_-", url.Query);
 		}
 
 		[Test]

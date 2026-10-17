@@ -33,11 +33,11 @@ public final class GeunedaGoogleSignIn {
     private GeunedaGoogleSignIn() {
     }
 
-    /** 로그인을 시작하고 취소용 신호를 돌려준다. */
-    public static CancellationSignal signIn(final Activity activity, String serverClientId, final GeunedaGoogleSignInCallback callback) {
+    /** 로그인을 시작하고 취소용 신호를 돌려준다. nonce 는 서버가 발급한 원문이고 id 토큰의 nonce 클레임에 그대로 들어간다. */
+    public static CancellationSignal signIn(final Activity activity, String serverClientId, String nonce, final GeunedaGoogleSignInCallback callback) {
         final CancellationSignal signal = new CancellationSignal();
         final GetCredentialRequest request = new GetCredentialRequest.Builder()
-                .addCredentialOption(new GetSignInWithGoogleOption.Builder(serverClientId).build())
+                .addCredentialOption(new GetSignInWithGoogleOption.Builder(serverClientId).setNonce(nonce).build())
                 .build();
 
         activity.runOnUiThread(new Runnable() {

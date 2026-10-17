@@ -37,7 +37,8 @@ namespace Geuneda.Account.Google
 			}
 		}
 
-		public async UniTask<Result<PlatformCredential>> SignInAsync(string serverClientId, CancellationToken cancellationToken)
+		/// <param name="nonce">서버가 발급한 nonce 원문. id 토큰의 <c>nonce</c> 클레임에 그대로 들어갑니다.</param>
+		public async UniTask<Result<PlatformCredential>> SignInAsync(string serverClientId, string nonce, CancellationToken cancellationToken)
 		{
 			var completion = new UniTaskCompletionSource<Result<string>>();
 			AndroidJavaObject signal;
@@ -47,7 +48,7 @@ namespace Geuneda.Account.Google
 				using (var plugin = new AndroidJavaClass(PluginClass))
 				using (var activity = CurrentActivity())
 				{
-					signal = plugin.CallStatic<AndroidJavaObject>("signIn", activity, serverClientId,
+					signal = plugin.CallStatic<AndroidJavaObject>("signIn", activity, serverClientId, nonce,
 						new Callback((status, value, message) => completion.TrySetResult(GoogleSignInResults.From(status, value, message))));
 				}
 			}

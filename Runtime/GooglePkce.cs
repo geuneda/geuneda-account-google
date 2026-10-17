@@ -52,7 +52,8 @@ namespace Geuneda.Account.Google
 			}
 		}
 
-		public string AuthorizationUrl(string iosClientId)
+		/// <param name="nonce">서버가 발급한 nonce 원문. 구글은 id 토큰의 <c>nonce</c> 클레임에 그대로 넣습니다(OpenID Connect).</param>
+		public string AuthorizationUrl(string iosClientId, string nonce)
 		{
 			return AuthorizationEndpoint +
 				"?client_id=" + Uri.EscapeDataString(iosClientId) +
@@ -61,7 +62,8 @@ namespace Geuneda.Account.Google
 				"&scope=" + Uri.EscapeDataString("openid") +
 				"&code_challenge=" + Challenge +
 				"&code_challenge_method=S256" +
-				"&state=" + State;
+				"&state=" + State +
+				"&nonce=" + Uri.EscapeDataString(nonce);
 		}
 
 		/// <summary>돌아온 주소에서 인가 코드를 꺼냅니다. 상태가 다르거나(위조) 오류가 왔거나 코드가 없으면 false 이고 <paramref name="error"/> 에 이유를 넣습니다.</summary>

@@ -26,11 +26,21 @@ namespace Geuneda.Account.Google.Tests
 		{
 			var provider = new GoogleAuthProvider(new GoogleAuthOptions { IosClientId = "1-a.apps.googleusercontent.com" });
 
-			var result = provider.SignInAsync(CancellationToken.None);
+			var result = provider.SignInAsync("nonce", CancellationToken.None);
 
 			Assert.AreEqual(AccountPlatforms.Google, provider.Platform);
+			Assert.IsTrue(provider.RequiresNonce);
 			Assert.AreEqual(AccountResultCodes.PlatformSignInFailed, result.GetAwaiter().GetResult().Code);
 			Assert.IsTrue(provider.SignOutAsync(CancellationToken.None).Status.IsCompleted());
+		}
+
+		[TestCase(null)]
+		[TestCase("")]
+		public void MissingNonce_Throws(string nonce)
+		{
+			var provider = new GoogleAuthProvider(new GoogleAuthOptions { IosClientId = "1-a.apps.googleusercontent.com" });
+
+			Assert.Throws<ArgumentException>(() => provider.SignInAsync(nonce, CancellationToken.None));
 		}
 
 		[TestCase(0, "token", 0)]

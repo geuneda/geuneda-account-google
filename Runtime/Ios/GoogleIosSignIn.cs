@@ -47,11 +47,12 @@ namespace Geuneda.Account.Google
 			_http = http;
 		}
 
-		public async UniTask<Result<PlatformCredential>> SignInAsync(CancellationToken cancellationToken)
+		/// <param name="nonce">서버가 발급한 nonce 원문. 인가 요청에 넣으면 구글이 id 토큰의 <c>nonce</c> 클레임에 그대로 넣습니다.</param>
+		public async UniTask<Result<PlatformCredential>> SignInAsync(string nonce, CancellationToken cancellationToken)
 		{
 			var pkce = GooglePkce.Create();
 			_context = GCHandle.ToIntPtr(GCHandle.Alloc(this));
-			GeunedaGoogleSignIn_Start(_context, pkce.AuthorizationUrl(_clientId), GooglePkce.CallbackScheme(_clientId), _ephemeral ? 1 : 0, Completed);
+			GeunedaGoogleSignIn_Start(_context, pkce.AuthorizationUrl(_clientId, nonce), GooglePkce.CallbackScheme(_clientId), _ephemeral ? 1 : 0, Completed);
 
 			Result<string> callback;
 

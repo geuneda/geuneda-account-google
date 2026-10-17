@@ -58,6 +58,7 @@ builder.Services.AddGeunedaAccount(...).AddGoogle(options =>
 
 ## 동작
 
+- id 토큰은 인증 서버가 발급한 nonce 에 묶습니다(replay 방어). `AuthService` 가 넘긴 nonce 원문을 Android 는 `GetSignInWithGoogleOption.Builder.setNonce`, iOS 는 인가 요청의 `nonce` 파라미터로 넣고, 구글은 그 값을 id 토큰의 `nonce` 클레임에 그대로 넣습니다. 서버(`GoogleIdTokenVerifier`)는 요청의 원문과 비교한 뒤 nonce 를 소비하므로 같은 id 토큰을 다시 보내면 `InvalidNonce` 입니다. `IAuthProvider` 로 직접 부를 때는 `SignInAsync(nonce, token)` 에 서버 nonce 를 넘겨야 합니다(비면 `ArgumentException`).
 - 사용자가 닫으면 `ResultCodes.Cancelled`, 그 밖의 실패는 `AccountResultCodes.PlatformSignInFailed` 입니다(메시지에 원인). iOS 의 토큰 교환이 네트워크로 실패하면 그 코드(`NetworkError`, `Timeout`)입니다.
 - 로그인은 앱이 전면 활성일 때 부릅니다(버튼). iOS 는 앱 장면이 활성이 아니면 세션을 열지 못해 실패합니다(ASWebAuthenticationSession 오류 3).
 - `SignInAsync` 의 취소 토큰을 취소하면 결과는 `Cancelled` 입니다. iOS 는 바로 끝나고 화면도 닫습니다. Android 는 구글 화면이 떠 있는 동안 Unity 가 멈춰 있어 사용자가 화면을 닫고 앱으로 돌아온 뒤에 결과가 오며, 화면을 대신 닫지 않습니다.
@@ -68,7 +69,7 @@ builder.Services.AddGeunedaAccount(...).AddGoogle(options =>
 ## 요구 사항
 
 - Unity 2021.3 이상, Android API 23 이상(compileSdk 34 이상으로 빌드), iOS 13 이상
-- `com.geuneda.account` 0.1.0, `com.geuneda.core` 0.2.0, `com.geuneda.http` 0.1.0, `com.cysharp.unitask` 2.5.10, `com.unity.nuget.newtonsoft-json` 3.2.1
+- `com.geuneda.account` 0.3.0(nonce 를 받는 인증 서버도 0.3.0), `com.geuneda.core` 0.2.0, `com.geuneda.http` 0.1.0, `com.cysharp.unitask` 2.5.10, `com.unity.nuget.newtonsoft-json` 3.2.1
 
 변경 이력은 [CHANGELOG.md](CHANGELOG.md) 를 참고하세요.
 

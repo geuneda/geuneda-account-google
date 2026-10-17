@@ -13,7 +13,7 @@
 | 파일 | 역할 |
 |------|------|
 | `Runtime/GoogleAuthProvider.cs`, `GoogleAuthOptions.cs` | 공개 제공자와 설정(클라이언트 ID 형식 검사) |
-| `Runtime/GooglePkce.cs` | 검증자·도전값(S256)·상태, 인가 주소, 돌아온 주소 해석(상태 검사) |
+| `Runtime/GooglePkce.cs` | 검증자·도전값(S256)·상태, 인가 주소(서버 nonce 포함), 돌아온 주소 해석(상태 검사) |
 | `Runtime/GoogleTokenExchange.cs` | `https://oauth2.googleapis.com/token` 인가 코드 교환(form, PKCE) |
 | `Runtime/GoogleSignInResults.cs`, `GoogleSignInStatus.cs` | 네이티브 상태 → 결과 코드 |
 | `Runtime/Android/GoogleAndroidSignIn.cs` | `#if UNITY_ANDROID && !UNITY_EDITOR`. Java 호출, `AndroidJavaProxy` 콜백(UI 스레드 → `MainThreadDispatcher.Post`), `CancellationSignal` 취소 |
@@ -29,11 +29,12 @@
 - **Android 스레드**: Credential Manager 호출은 UI 스레드(`runOnUiThread`), 결과 콜백도 메인 루퍼 executor 에서 옵니다. `Runnable` 안의 예외는 C# 의 `AndroidJavaException` 으로 잡히지 않으므로 Java 에서 잡아 실패 콜백으로 넘깁니다(로그인·로그아웃 모두 콜백으로 끝남). C# 은 Unity 메인 스레드로 넘깁니다. 취소도 메인 스레드에서 끝났는지 확인한 뒤 `signal.cancel()` 합니다(해제된 신호를 건드리지 않게).
 - **R8**: `proguard-rules.pro` 가 Java 진입점과 콜백 인터페이스, `androidx.credentials.playservices` 를 지킵니다(consumerProguardFiles). 클래스·메서드 이름을 바꾸면 규칙도 바꿉니다.
 - **상태 값**(0 성공, 1 취소, 2 실패, 3 미지원)은 C# enum, Java, .mm 이 같아야 합니다.
+- **nonce**: `RequiresNonce` 는 true 이고 서버 nonce 원문을 그대로 넘깁니다. Android 는 Java `signIn(activity, serverClientId, nonce, callback)` 이 `GetSignInWithGoogleOption.Builder.setNonce`, iOS 는 `GooglePkce.AuthorizationUrl(clientId, nonce)` 가 인가 요청의 `nonce` 파라미터로 넣습니다. 구글은 원문을 id 토큰 `nonce` 클레임에 그대로 넣고 서버 `GoogleIdTokenVerifier` 는 원문과 비교합니다(해시하지 않음). Java 메서드 시그니처를 바꾸면 C# `CallStatic` 인자와 R8 규칙을 함께 봅니다.
 - 의존성 버전을 올리면 compileSdk 요구(1.3.0 은 34)를 확인합니다.
 - **AndroidX 직접 의존**: `credentials-play-services-auth` 가 play-services-auth 에서 `androidx.core`·`androidx.loader` 를 빼고 받으므로 `build.gradle` 에 직접 넣습니다. Unity 앱에는 AndroidX 가 없어 빼면 `HiddenActivity` 가 `androidx.activity.ComponentActivity` 를 못 읽고 앱이 죽습니다(2026-10-14 BlueStacks 재현, R8 과 무관한 의존성 누락).
 - **Android 취소**: 구글 화면이 떠 있는 동안 Unity 플레이어가 멈춰 `MainThreadDispatcher` 로 넘긴 취소는 앱으로 돌아온 뒤에 실행됩니다. Credential Manager 는 콘솔 설정 오류도 취소 예외로 주므로 `Cancelled` 결과에 네이티브 메시지(`getType()` + 메시지, 클래스 이름은 R8 이 바꿈)를 남깁니다.
 
 ## 4. 테스트
 
-- `Tests/EditMode/`: PKCE(RFC 7636 예시 값), 인가 주소, 돌아온 주소(상태 불일치·오류·코드 없음), 토큰 교환(가짜 전송: 성공·400·id_token 없음·HTML·네트워크), 설정 검사, 상태 → 코드.
+- `Tests/EditMode/`: PKCE(RFC 7636 예시 값), 인가 주소(nonce 포함), 돌아온 주소(상태 불일치·오류·코드 없음), 토큰 교환(가짜 전송: 성공·400·id_token 없음·HTML·네트워크), 설정 검사, nonce 누락 예외, 상태 → 코드.
 - 기기(2026-10-14): iOS 시뮬레이터에서 세션이 열리고 취소 → `Cancelled`, 장면 비활성일 때 오류 3 → `PlatformSignInFailed`. Android 는 BlueStacks 에서 Credential Manager 호출 경로(가짜 클라이언트 ID). 실제 로그인은 Google Cloud 클라이언트 설정이 필요해 확인하지 않았습니다.
